@@ -1,9 +1,6 @@
 #!/bin/sh
 set -e
 
-# Cambiar al directorio del proyecto
-cd "$(dirname "$0")"
-
 # Construir frontend
 npm run build
 
