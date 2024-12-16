@@ -1,11 +1,10 @@
-import pkg from 'google-spreadsheet';
+const pkg = require('google-spreadsheet');
 const { GoogleSpreadsheet } = pkg;
-import { JWT } from 'google-auth-library';
+const { JWT } = require('google-auth-library');
 
 // Only load dotenv in development
 if (process.env.NODE_ENV !== 'production') {
-  const dotenv = await import('dotenv');
-  dotenv.config();
+  require('dotenv').config();
 }
 
 // Validate environment variables
@@ -32,7 +31,7 @@ const serviceAccountAuth = new JWT({
 // Initialize the sheet
 const doc = new GoogleSpreadsheet(process.env.GOOGLE_SHEETS_SPREADSHEET_ID, serviceAccountAuth);
 
-export async function initializeSheet() {
+exports.initializeSheet = async function initializeSheet() {
   try {
     console.log('Loading Google Sheet...');
     await doc.loadInfo();
@@ -67,7 +66,7 @@ async function getSheetData() {
   return { sheet, rows, headers };
 }
 
-export async function searchByRadicado(radicado) {
+exports.searchByRadicado = async function searchByRadicado(radicado) {
   try {
     console.log('Searching for radicado:', radicado);
     const { rows } = await getSheetData();
@@ -124,7 +123,7 @@ export async function searchByRadicado(radicado) {
   }
 }
 
-export async function searchByAsunto(keyword) {
+async function searchByAsunto(keyword) {
   try {
     console.log('Searching for keyword in asunto:', keyword);
     const { rows } = await getSheetData();

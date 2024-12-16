@@ -1,14 +1,13 @@
-import express from 'express';
-import cors from 'cors';
-import { mkdir } from 'fs/promises';
-import apiRoutes from './routes/api.js';
-import { errorHandler } from './middleware/errorHandler.js';
-import { SERVER_CONFIG } from './config/server.js';
+const express = require('express');
+const cors = require('cors');
+const { mkdir } = require('fs/promises');
+const apiRoutes = require('./routes/api.js');
+const errorHandler = require('./middleware/errorHandler.js');
+const SERVER_CONFIG = require('./config/server.js');
 
 // Load environment variables only in development
 if (process.env.NODE_ENV !== 'production') {
-  const dotenv = await import('dotenv');
-  dotenv.config();
+  require('dotenv').config();
 }
 
 const app = express();

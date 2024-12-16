@@ -16,17 +16,13 @@ FROM node:18-alpine
 
 WORKDIR /app
 
-# Install dependencies first
-COPY server/package*.json ./
-RUN npm init -y && \
-    npm install google-spreadsheet@4.1.1 \
-                google-auth-library@9.4.1 \
-                express@4.18.2 \
-                cors@2.8.5 \
-                googleapis@129.0.0
-
-# Copy server files
+# Copy and install server dependencies
 COPY server ./server
+WORKDIR /app/server
+RUN npm install
+
+# Copy built frontend
+WORKDIR /app
 COPY --from=frontend-build /app/dist ./dist
 
 # Set environment variables
