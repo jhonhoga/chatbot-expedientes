@@ -12,7 +12,7 @@ COPY server/package*.json ./server/
 RUN npm install
 RUN cd server && npm install
 
-# Copy source code
+# Copy entire project
 COPY . .
 
 # Build frontend
@@ -26,4 +26,4 @@ ENV PORT=3000
 EXPOSE 3000
 
 # Start command
-CMD ["npm", "start"]
+CMD ["npm", "run", "server"]
