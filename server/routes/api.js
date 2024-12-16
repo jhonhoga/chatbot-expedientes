@@ -1,5 +1,5 @@
-import express from 'express';
-import { searchByRadicado, searchByAsunto, initializeSheet } from '../services/sheets.js';
+const express = require('express');
+const { searchByRadicado, searchByAsunto, initializeSheet } = require('../services/sheets');
 
 const router = express.Router();
 
@@ -122,4 +122,4 @@ router.post('/query', async (req, res) => {
   }
 });
 
-export default router;
+module.exports = router;

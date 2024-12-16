@@ -1,16 +1,19 @@
-import { join, dirname } from 'path';
-import { fileURLToPath } from 'url';
+const path = require('path');
+const url = require('url');
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
+const __dirname = path.dirname(url.fileURLToPath(import.meta.url));
 
-export const SERVER_CONFIG = {
-  PORT: process.env.PORT || 3000,
-  CORS_OPTIONS: {
-    origin: 'http://localhost:5173',
-    methods: ['GET', 'POST', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Accept'],
+const SERVER_CONFIG = {
+  port: process.env.PORT || 3000,
+  corsOptions: {
+    origin: process.env.NODE_ENV === 'production'
+      ? ['https://chatbot-jhonhoga.koyeb.app']
+      : ['http://localhost:5173', 'http://127.0.0.1:5173'],
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true,
-    optionsSuccessStatus: 200
+    optionsSuccessStatus: 204
   },
-  UPLOADS_DIR: join(__dirname, '..', 'uploads'),
+  uploadsDir: path.join(__dirname, '..', 'uploads'),
 };
+
+module.exports = SERVER_CONFIG;
