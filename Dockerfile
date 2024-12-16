@@ -16,12 +16,18 @@ FROM node:18-alpine
 
 WORKDIR /app
 
-# Copy server files first
-COPY server ./server
-
-# Install server dependencies
+# Install server dependencies first
 WORKDIR /app/server
-RUN npm install --production
+COPY server/package.json ./
+RUN npm install google-spreadsheet@4.1.1 \
+    google-auth-library@9.4.1 \
+    express@4.18.2 \
+    cors@2.8.5 \
+    googleapis@129.0.0 \
+    dotenv@16.3.1
+
+# Copy server files
+COPY server ./
 
 # Copy built frontend from previous stage
 WORKDIR /app
