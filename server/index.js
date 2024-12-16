@@ -4,16 +4,20 @@ import { mkdir } from 'fs/promises';
 import apiRoutes from './routes/api.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { SERVER_CONFIG } from './config/server.js';
-import dotenv from 'dotenv';
 
-// Load environment variables
-dotenv.config();
+// Load environment variables only in development
+if (process.env.NODE_ENV !== 'production') {
+  const dotenv = await import('dotenv');
+  dotenv.config();
+}
 
 const app = express();
 
 // CORS middleware
 const corsOptions = {
-  origin: 'http://localhost:5173',
+  origin: process.env.NODE_ENV === 'production' 
+    ? ['https://*.koyeb.app', 'https://*.koyeb.com'] 
+    : 'http://localhost:5173',
   methods: ['GET', 'POST', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Accept'],
   credentials: true,
@@ -30,7 +34,9 @@ app.use(express.json());
 
 // Add headers middleware
 app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', 'http://localhost:5173');
+  res.header('Access-Control-Allow-Origin', process.env.NODE_ENV === 'production' 
+    ? ['https://*.koyeb.app', 'https://*.koyeb.com'] 
+    : 'http://localhost:5173');
   res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Content-Type, Accept');
   res.header('Access-Control-Allow-Credentials', 'true');
