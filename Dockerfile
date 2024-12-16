@@ -7,9 +7,11 @@ WORKDIR /app
 COPY package*.json ./
 COPY server/package*.json ./server/
 
-# Install dependencies
+# Install dependencies for both frontend and server
 RUN npm install
-RUN cd server && npm install
+WORKDIR /app/server
+RUN npm install
+WORKDIR /app
 
 # Copy all project files
 COPY . .
@@ -26,16 +28,21 @@ WORKDIR /app
 COPY package*.json ./
 COPY server/package*.json ./server/
 
-# Install production dependencies
+# Install production dependencies for both frontend and server
 RUN npm install --only=production
-RUN cd server && npm install --only=production
+WORKDIR /app/server
+RUN npm install --only=production
+WORKDIR /app
 
 # Copy built frontend and server files
 COPY --from=build /app/dist ./dist
 COPY --from=build /app/server ./server
 
+# Set environment variables
+ENV NODE_ENV=production
+
 # Expose the port
 EXPOSE 3000
 
 # Start the server
-CMD ["npm", "start"]
+CMD ["node", "server/index.js"]
