@@ -3,7 +3,7 @@ FROM node:18-alpine AS build
 
 WORKDIR /app
 
-# Copy all package files first
+# Copy package files
 COPY package*.json ./
 COPY server/package*.json ./server/
 
@@ -24,11 +24,12 @@ FROM node:18-alpine
 
 WORKDIR /app
 
-# Copy package files
-COPY package*.json ./
-COPY server/package*.json ./server/
+# Copy package files and install production dependencies
+COPY --from=build /app/package*.json ./
+COPY --from=build /app/server/package*.json ./server/
 
-# Install production dependencies for both frontend and server
+# Install production dependencies
+WORKDIR /app
 RUN npm install --only=production
 WORKDIR /app/server
 RUN npm install --only=production
