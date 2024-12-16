@@ -4,25 +4,14 @@ FROM node:18-alpine
 # Set working directory
 WORKDIR /app
 
-# Copy package files
-COPY package*.json ./
-COPY server/package*.json ./server/
-
-# Install root dependencies
-RUN npm install
-
-# Install server dependencies
-WORKDIR /app/server
-RUN npm install
-
-# Back to root directory
-WORKDIR /app
-
-# Copy entire project
+# Copy all files
 COPY . .
 
-# Build frontend
-RUN npm run build
+# Make the build script executable
+RUN chmod +x build.sh
+
+# Install dependencies and build
+RUN ./build.sh
 
 # Set environment variables
 ENV NODE_ENV=production
