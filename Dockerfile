@@ -4,14 +4,19 @@ FROM node:18-alpine
 # Set working directory
 WORKDIR /app
 
-# Copy all files
+# Copy package files
+COPY package*.json ./
+COPY server/package*.json ./server/
+
+# Install dependencies
+RUN npm install
+RUN cd server && npm install
+
+# Copy entire project
 COPY . .
 
-# Make the heroku-postbuild script executable
-RUN chmod +x heroku-postbuild.sh
-
-# Install dependencies and build
-RUN sh heroku-postbuild.sh
+# Build frontend
+RUN npm run build
 
 # Set environment variables
 ENV NODE_ENV=production
@@ -21,4 +26,4 @@ ENV PORT=3000
 EXPOSE 3000
 
 # Start command
-CMD ["npm", "run", "server"]
+CMD ["npm", "start"]
