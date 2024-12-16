@@ -8,9 +8,15 @@ WORKDIR /app
 COPY package*.json ./
 COPY server/package*.json ./server/
 
-# Install dependencies
+# Install root dependencies
 RUN npm install
-RUN cd server && npm install
+
+# Install server dependencies
+WORKDIR /app/server
+RUN npm install
+
+# Back to root directory
+WORKDIR /app
 
 # Copy entire project
 COPY . .
