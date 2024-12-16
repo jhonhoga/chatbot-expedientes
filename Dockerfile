@@ -1,22 +1,14 @@
-# Build stage
-FROM node:18-alpine AS build
+# Build stage for frontend
+FROM node:18-alpine AS frontend-build
 
 WORKDIR /app
 
-# Copy package files
+# Copy frontend package files and install dependencies
 COPY package*.json ./
-COPY server/package*.json ./server/
-
-# Install dependencies for both frontend and server
 RUN npm install
-WORKDIR /app/server
-RUN npm install
-WORKDIR /app
 
-# Copy all project files
+# Copy frontend source and build
 COPY . .
-
-# Build the frontend
 RUN npm run build
 
 # Production stage
@@ -24,20 +16,15 @@ FROM node:18-alpine
 
 WORKDIR /app
 
-# Copy package files and install production dependencies
-COPY --from=build /app/package*.json ./
-COPY --from=build /app/server/package*.json ./server/
+# Copy server files
+COPY server ./server
 
-# Install production dependencies
-WORKDIR /app
-RUN npm install --only=production
+# Install server dependencies
 WORKDIR /app/server
-RUN npm install --only=production
-WORKDIR /app
+RUN npm install
 
-# Copy built frontend and server files
-COPY --from=build /app/dist ./dist
-COPY --from=build /app/server ./server
+# Copy built frontend
+COPY --from=frontend-build /app/dist ../dist
 
 # Set environment variables
 ENV NODE_ENV=production
@@ -46,4 +33,5 @@ ENV NODE_ENV=production
 EXPOSE 3000
 
 # Start the server
+WORKDIR /app
 CMD ["node", "server/index.js"]

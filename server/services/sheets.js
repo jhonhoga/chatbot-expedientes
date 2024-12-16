@@ -1,15 +1,17 @@
 import { GoogleSpreadsheet } from 'google-spreadsheet';
 import { JWT } from 'google-auth-library';
-import dotenv from 'dotenv';
 
-// Load environment variables
-dotenv.config();
+// Only load dotenv in development
+if (process.env.NODE_ENV !== 'production') {
+  const dotenv = await import('dotenv');
+  dotenv.config();
+}
 
 // Validate environment variables
 const requiredEnvVars = [
-  'GOOGLE_SHEET_ID',
-  'GOOGLE_SERVICE_ACCOUNT_EMAIL',
-  'GOOGLE_PRIVATE_KEY'
+  'GOOGLE_SHEETS_SPREADSHEET_ID',
+  'GOOGLE_SHEETS_CLIENT_EMAIL',
+  'GOOGLE_SHEETS_PRIVATE_KEY'
 ];
 
 const missingEnvVars = requiredEnvVars.filter(varName => !process.env[varName]);
@@ -17,17 +19,17 @@ if (missingEnvVars.length > 0) {
   throw new Error(`Missing required environment variables: ${missingEnvVars.join(', ')}`);
 }
 
-console.log('Initializing Google Sheets with Sheet ID:', process.env.GOOGLE_SHEET_ID);
+console.log('Initializing Google Sheets with Sheet ID:', process.env.GOOGLE_SHEETS_SPREADSHEET_ID);
 
 // Create JWT client
 const serviceAccountAuth = new JWT({
-  email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
-  key: process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+  email: process.env.GOOGLE_SHEETS_CLIENT_EMAIL,
+  key: process.env.GOOGLE_SHEETS_PRIVATE_KEY?.replace(/\\n/g, '\n'),
   scopes: ['https://www.googleapis.com/auth/spreadsheets'],
 });
 
 // Initialize the sheet
-const doc = new GoogleSpreadsheet(process.env.GOOGLE_SHEET_ID, serviceAccountAuth);
+const doc = new GoogleSpreadsheet(process.env.GOOGLE_SHEETS_SPREADSHEET_ID, serviceAccountAuth);
 
 export async function initializeSheet() {
   try {
