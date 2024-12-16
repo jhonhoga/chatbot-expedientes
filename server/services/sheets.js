@@ -1,4 +1,5 @@
-import { GoogleSpreadsheet } from 'google-spreadsheet';
+import pkg from 'google-spreadsheet';
+const { GoogleSpreadsheet } = pkg;
 import { JWT } from 'google-auth-library';
 
 // Only load dotenv in development
