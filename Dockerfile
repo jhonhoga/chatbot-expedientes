@@ -16,12 +16,14 @@ FROM node:18-alpine
 
 WORKDIR /app
 
-# Copy and install server dependencies
+# Copy server files first
 COPY server ./server
-WORKDIR /app/server
-RUN npm install
 
-# Copy built frontend
+# Install server dependencies
+WORKDIR /app/server
+RUN npm install --production
+
+# Copy built frontend from previous stage
 WORKDIR /app
 COPY --from=frontend-build /app/dist ./dist
 
