@@ -16,22 +16,24 @@ FROM node:18-alpine
 
 WORKDIR /app
 
-# Copy server files
-COPY server ./server
-
-# Install server dependencies
+# First, set up server dependencies
+COPY server/package*.json ./server/
 WORKDIR /app/server
-RUN npm install
+RUN npm install --production
 
-# Copy built frontend
-COPY --from=frontend-build /app/dist ../dist
+# Copy server files
+COPY server ./
+
+# Copy built frontend from previous stage
+WORKDIR /app
+COPY --from=frontend-build /app/dist ./dist
 
 # Set environment variables
 ENV NODE_ENV=production
+ENV PORT=3000
 
 # Expose the port
 EXPOSE 3000
 
 # Start the server
-WORKDIR /app
 CMD ["node", "server/index.js"]
