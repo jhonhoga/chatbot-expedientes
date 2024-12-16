@@ -9,7 +9,7 @@
     "preview": "vite preview",
     "start": "node server/index.js",
     "server": "node server/index.js",
-    "heroku-postbuild": "npm run build"
+    "heroku-postbuild": "./heroku-postbuild.sh"
   },
   "dependencies": {
     "cors": "^2.8.5",

@@ -7,8 +7,8 @@ WORKDIR /app
 # Copy all files
 COPY . .
 
-# Make the build script executable
-RUN chmod +x build.sh
+# Make the scripts executable
+RUN chmod +x build.sh heroku-postbuild.sh
 
 # Install dependencies and build
 RUN ./build.sh
