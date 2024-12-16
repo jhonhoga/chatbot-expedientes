@@ -11,7 +11,7 @@ COPY . .
 RUN chmod +x heroku-postbuild.sh
 
 # Install dependencies and build
-RUN ./heroku-postbuild.sh
+RUN sh heroku-postbuild.sh
 
 # Set environment variables
 ENV NODE_ENV=production
