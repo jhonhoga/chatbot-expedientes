@@ -1,16 +1,21 @@
-const express = require('express');
-const cors = require('cors');
-const path = require('path');
-const apiRoutes = require('./routes/api.js');
-const errorHandler = require('./middleware/errorHandler.js');
-const SERVER_CONFIG = require('./config/server.js');
+import express from 'express';
+import cors from 'cors';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+import apiRoutes from './routes/api.js';
+import errorHandler from './middleware/errorHandler.js';
+import SERVER_CONFIG from './config/server.js';
 
 // Load environment variables only in development
 if (process.env.NODE_ENV !== 'production') {
   require('dotenv').config();
 }
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
 const app = express();
+const PORT = process.env.PORT || SERVER_CONFIG.PORT;
 
 // CORS middleware
 app.use(cors(SERVER_CONFIG.corsOptions));
@@ -19,7 +24,7 @@ app.use(cors(SERVER_CONFIG.corsOptions));
 app.use(express.json());
 
 // Serve static files from the React app
-app.use(express.static(path.join(__dirname, '../dist')));
+app.use(express.static(join(__dirname, '../dist')));
 
 // Use API routes
 app.use('/api', apiRoutes);
@@ -29,12 +34,11 @@ app.use(errorHandler);
 
 // Handle React routing, return all requests to React app
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../dist/index.html'));
+  res.sendFile(join(__dirname, '../dist/index.html'));
 });
 
 let server;
 try {
-  const PORT = process.env.PORT || SERVER_CONFIG.PORT;
   server = app.listen(PORT, () => {
     console.log(`✨ Server running on http://localhost:${PORT}`);
   });
