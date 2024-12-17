@@ -1,10 +1,10 @@
-const pkg = require('google-spreadsheet');
-const { GoogleSpreadsheet } = pkg;
-const { JWT } = require('google-auth-library');
+import { GoogleSpreadsheet } from 'google-spreadsheet';
+import { JWT } from 'google-auth-library';
+import dotenv from 'dotenv';
 
 // Only load dotenv in development
 if (process.env.NODE_ENV !== 'production') {
-  require('dotenv').config();
+  dotenv.config();
 }
 
 // Validate environment variables
@@ -19,152 +19,83 @@ if (missingEnvVars.length > 0) {
   throw new Error(`Missing required environment variables: ${missingEnvVars.join(', ')}`);
 }
 
-console.log('Initializing Google Sheets with Sheet ID:', process.env.GOOGLE_SHEETS_SPREADSHEET_ID);
+let doc = null;
 
-// Create JWT client
-const serviceAccountAuth = new JWT({
-  email: process.env.GOOGLE_SHEETS_CLIENT_EMAIL,
-  key: process.env.GOOGLE_SHEETS_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-  scopes: ['https://www.googleapis.com/auth/spreadsheets'],
-});
-
-// Initialize the sheet
-const doc = new GoogleSpreadsheet(process.env.GOOGLE_SHEETS_SPREADSHEET_ID, serviceAccountAuth);
-
-exports.initializeSheet = async function initializeSheet() {
+export async function initializeSheet() {
   try {
-    console.log('Loading Google Sheet...');
+    const credentials = {
+      email: process.env.GOOGLE_SHEETS_CLIENT_EMAIL,
+      key: process.env.GOOGLE_SHEETS_PRIVATE_KEY.replace(/\\n/g, '\n'),
+      scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+    };
+
+    const jwt = new JWT(credentials);
+    doc = new GoogleSpreadsheet(process.env.GOOGLE_SHEETS_SPREADSHEET_ID, jwt);
     await doc.loadInfo();
-    console.log('Google Sheets document loaded successfully');
-    console.log('Document title:', doc.title);
-    console.log('Sheet count:', doc.sheetCount);
-    
-    // Log information about each sheet
-    doc.sheetsByIndex.forEach((sheet, index) => {
-      console.log(`Sheet ${index}: "${sheet.title}" (${sheet.rowCount} rows)`);
-    });
-    
-    return true;
+    console.log('Google Sheets connection initialized successfully');
   } catch (error) {
-    console.error('Error loading Google Sheets document:', error);
-    return false;
+    console.error('Error initializing Google Sheets:', error);
+    throw error;
   }
 }
 
 async function getSheetData() {
-  await doc.loadInfo();
+  if (!doc) {
+    throw new Error('Google Sheets not initialized');
+  }
+
   const sheet = doc.sheetsByIndex[0];
-  console.log('Using sheet:', sheet.title);
-  
+  await sheet.loadCells();
   const rows = await sheet.getRows();
-  console.log('Total rows found:', rows.length);
-  
-  // Get headers from the first row
-  const headers = rows.length > 0 ? Object.keys(rows[0]._rawData).map((_, index) => rows[0]._rawData[index]) : [];
-  console.log('Headers found:', headers);
-  
-  return { sheet, rows, headers };
+  return rows;
 }
 
-exports.searchByRadicado = async function searchByRadicado(radicado) {
+export async function searchByRadicado(radicado) {
   try {
-    console.log('Searching for radicado:', radicado);
-    const { rows } = await getSheetData();
-    
-    // Log the first few rows as examples
-    console.log('\nFirst 3 rows data:');
-    for (let i = 0; i < Math.min(3, rows.length); i++) {
-      console.log(`Row ${i + 1}:`, {
-        radicado: rows[i]._rawData[0],
-        asunto: rows[i]._rawData[2]
-      });
-    }
-    
-    const result = rows.find(row => {
-      const rowRadicado = String(row._rawData[0] || '').trim(); // Convert to string and trim whitespace
-      const searchRadicado = String(radicado).trim(); // Convert search term to string and trim whitespace
-      console.log('Comparing:', `"${rowRadicado}"`, 'with:', `"${searchRadicado}"`);
-      return rowRadicado.toLowerCase() === searchRadicado.toLowerCase();
+    const rows = await getSheetData();
+    const results = rows.filter(row => {
+      const rowRadicado = row.get('Radicado');
+      return rowRadicado && rowRadicado.toString().includes(radicado);
     });
-    
-    if (!result) {
-      console.log('No matching radicado found');
-      return { found: false, message: 'No se encontró ningún registro con ese número de radicado.' };
-    }
-    
-    console.log('Found matching radicado:', result._rawData[0]);
-    
-    // Función auxiliar para formatear el enlace
-    function formatUrl(url) {
-      if (!url) return 'No disponible';
-      // Si la URL no comienza con http:// o https://, agregar https://
-      if (!url.startsWith('http://') && !url.startsWith('https://')) {
-        return `https://${url}`;
-      }
-      return url;
-    }
 
-    return {
-      found: true,
-      data: {
-        radicado: result._rawData[0] || 'No disponible',
-        fecha: result._rawData[1] || 'No disponible',
-        asunto: result._rawData[2] || 'No disponible',
-        asignado: result._rawData[3] || 'No asignado',
-        estado: result._rawData[4] || 'Sin estado',
-        fechaEstimada: result._rawData[5] || 'No definida',
-        respuesta: result._rawData[6] || 'Sin respuesta',
-        enlace: formatUrl(result._rawData[7])
-      }
-    };
+    return results.map(row => ({
+      radicado: row.get('Radicado'),
+      asunto: row.get('Asunto'),
+      url: formatUrl(row.get('URL')),
+      fecha: row.get('Fecha'),
+      estado: row.get('Estado')
+    }));
   } catch (error) {
     console.error('Error searching by radicado:', error);
-    throw new Error('Error al buscar el radicado: ' + error.message);
+    throw error;
   }
 }
 
-async function searchByAsunto(keyword) {
+export async function searchByAsunto(keyword) {
   try {
-    console.log('Searching for keyword in asunto:', keyword);
-    const { rows } = await getSheetData();
-    
+    const rows = await getSheetData();
     const results = rows.filter(row => {
-      const asunto = row._rawData[2]; // Assuming asunto is in the third column
-      console.log('Checking asunto:', asunto);
-      return asunto?.toLowerCase().includes(keyword.toLowerCase());
+      const asunto = row.get('Asunto');
+      return asunto && asunto.toLowerCase().includes(keyword.toLowerCase());
     });
-    
-    console.log('Matching results found:', results.length);
-    
-    if (results.length === 0) {
-      return { found: false, message: 'No se encontraron registros que coincidan con la búsqueda.' };
-    }
-    
-    return {
-      found: true,
-      data: results.map(result => ({
-        radicado: result._rawData[0] || 'No disponible',
-        fecha: result._rawData[1] || 'No disponible',
-        asunto: result._rawData[2] || 'No disponible',
-        asignado: result._rawData[3] || 'No asignado',
-        estado: result._rawData[4] || 'Sin estado',
-        fechaEstimada: result._rawData[5] || 'No definida',
-        respuesta: result._rawData[6] || 'Sin respuesta',
-        enlace: formatUrl(result._rawData[7])
-      }))
-    };
+
+    return results.map(row => ({
+      radicado: row.get('Radicado'),
+      asunto: row.get('Asunto'),
+      url: formatUrl(row.get('URL')),
+      fecha: row.get('Fecha'),
+      estado: row.get('Estado')
+    }));
   } catch (error) {
     console.error('Error searching by asunto:', error);
-    throw new Error('Error al buscar por asunto: ' + error.message);
+    throw error;
   }
 }
 
-// Función auxiliar para formatear el enlace
 function formatUrl(url) {
-  if (!url) return 'No disponible';
-  // Si la URL no comienza con http:// o https://, agregar https://
-  if (!url.startsWith('http://') && !url.startsWith('https://')) {
-    return `https://${url}`;
+  if (!url) return '';
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    return url;
   }
-  return url;
+  return `https://drive.google.com/file/d/${url}/view`;
 }

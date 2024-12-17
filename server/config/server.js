@@ -1,19 +1,18 @@
-const path = require('path');
-const url = require('url');
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
 
-const __dirname = path.dirname(url.fileURLToPath(import.meta.url));
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
-const SERVER_CONFIG = {
+export const SERVER_CONFIG = {
   port: process.env.PORT || 3000,
   corsOptions: {
     origin: process.env.NODE_ENV === 'production'
-      ? ['https://chatbot-jhonhoga.koyeb.app']
+      ? ['https://chatbot-expedientes.onrender.com']
       : ['http://localhost:5173', 'http://127.0.0.1:5173'],
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true,
     optionsSuccessStatus: 204
   },
-  uploadsDir: path.join(__dirname, '..', 'uploads'),
+  uploadsDir: join(__dirname, '..', 'uploads'),
 };
-
-module.exports = SERVER_CONFIG;
