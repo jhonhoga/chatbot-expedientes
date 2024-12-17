@@ -67,8 +67,10 @@ async function getSheetData() {
   const rows = await sheet.getRows();
   console.log('Rows loaded:', rows.length);
   
-  // Log first row as sample
+  // Log column headers
   if (rows.length > 0) {
+    console.log('Available column headers:', rows[0]._sheet.headerValues);
+    console.log('Sample row raw data:', rows[0]._rawData);
     console.log('Sample row data:', {
       radicado: rows[0].get('Radicado'),
       fecha: rows[0].get('Fecha'),
@@ -126,8 +128,10 @@ export async function searchByAsunto(keyword) {
     
     const results = rows.filter(row => {
       const asunto = row.get('Asunto');
-      console.log('Checking asunto:', asunto);
-      return asunto && asunto.toLowerCase().includes(keyword.toLowerCase());
+      const descripcion = row.get('DESCRIPCION');  // Intentar con otro posible nombre de columna
+      const textoAsunto = asunto || descripcion;
+      console.log('Checking asunto/descripcion:', textoAsunto);
+      return textoAsunto && textoAsunto.toLowerCase().includes(keyword.toLowerCase());
     });
 
     console.log('Found results for asunto:', results.length);
@@ -144,7 +148,7 @@ export async function searchByAsunto(keyword) {
       data: results.map(row => ({
         radicado: row.get('Radicado') || 'No disponible',
         fecha: row.get('Fecha') || 'No disponible',
-        asunto: row.get('Asunto') || 'No disponible',
+        asunto: row.get('Asunto') || row.get('DESCRIPCION') || 'No disponible',
         asignado: row.get('Asignado') || 'No asignado',
         estado: row.get('Estado') || 'Sin estado',
         fechaEstimada: row.get('FechaEstimada') || 'No definida',
