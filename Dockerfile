@@ -7,11 +7,12 @@ WORKDIR /app
 # Copy all files
 COPY . .
 
-# Make the scripts executable
-RUN chmod +x build.sh heroku-postbuild.sh
+# Install dependencies for root and server
+RUN npm install
+RUN cd server && npm install
 
-# Install dependencies and build
-RUN ./build.sh
+# Build frontend
+RUN npm run build
 
 # Set environment variables
 ENV NODE_ENV=production
