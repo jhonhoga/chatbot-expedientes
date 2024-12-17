@@ -68,18 +68,31 @@ async function getSheetData() {
 export async function searchByRadicado(radicado) {
   try {
     const rows = await getSheetData();
-    const results = rows.filter(row => {
+    const result = rows.find(row => {
       const rowRadicado = row.get('Radicado');
-      return rowRadicado && rowRadicado.toString().includes(radicado);
+      return rowRadicado && rowRadicado.toString().toLowerCase() === radicado.toLowerCase();
     });
 
-    return results.map(row => ({
-      radicado: row.get('Radicado'),
-      asunto: row.get('Asunto'),
-      url: formatUrl(row.get('URL')),
-      fecha: row.get('Fecha'),
-      estado: row.get('Estado')
-    }));
+    if (!result) {
+      return {
+        found: false,
+        message: 'No se encontró ningún registro con ese número de radicado.'
+      };
+    }
+
+    return {
+      found: true,
+      data: {
+        radicado: result.get('Radicado') || 'No disponible',
+        fecha: result.get('Fecha') || 'No disponible',
+        asunto: result.get('Asunto') || 'No disponible',
+        asignado: result.get('Asignado') || 'No asignado',
+        estado: result.get('Estado') || 'Sin estado',
+        fechaEstimada: result.get('FechaEstimada') || 'No definida',
+        respuesta: result.get('Respuesta') || 'Sin respuesta',
+        enlace: formatUrl(result.get('URL'))
+      }
+    };
   } catch (error) {
     console.error('Error searching by radicado:', error);
     throw error;
@@ -94,13 +107,26 @@ export async function searchByAsunto(keyword) {
       return asunto && asunto.toLowerCase().includes(keyword.toLowerCase());
     });
 
-    return results.map(row => ({
-      radicado: row.get('Radicado'),
-      asunto: row.get('Asunto'),
-      url: formatUrl(row.get('URL')),
-      fecha: row.get('Fecha'),
-      estado: row.get('Estado')
-    }));
+    if (results.length === 0) {
+      return {
+        found: false,
+        message: 'No se encontraron registros que coincidan con la búsqueda.'
+      };
+    }
+
+    return {
+      found: true,
+      data: results.map(row => ({
+        radicado: row.get('Radicado') || 'No disponible',
+        fecha: row.get('Fecha') || 'No disponible',
+        asunto: row.get('Asunto') || 'No disponible',
+        asignado: row.get('Asignado') || 'No asignado',
+        estado: row.get('Estado') || 'Sin estado',
+        fechaEstimada: row.get('FechaEstimada') || 'No definida',
+        respuesta: row.get('Respuesta') || 'Sin respuesta',
+        enlace: formatUrl(row.get('URL'))
+      }))
+    };
   } catch (error) {
     console.error('Error searching by asunto:', error);
     throw error;
@@ -108,7 +134,7 @@ export async function searchByAsunto(keyword) {
 }
 
 function formatUrl(url) {
-  if (!url) return '';
+  if (!url) return 'No disponible';
   if (url.startsWith('http://') || url.startsWith('https://')) {
     return url;
   }
