@@ -21,11 +21,26 @@ if (missingEnvVars.length > 0) {
 
 let doc = null;
 
+function processPrivateKey(key) {
+  // Si la clave ya está en formato correcto, retornarla como está
+  if (key.includes('-----BEGIN PRIVATE KEY-----')) {
+    return key.replace(/\\n/g, '\n');
+  }
+  
+  // Si la clave está en formato base64, convertirla al formato PEM
+  const header = '-----BEGIN PRIVATE KEY-----\n';
+  const footer = '\n-----END PRIVATE KEY-----\n';
+  return header + key.replace(/[^\w\d/+=]/g, '').replace(/(.{64})/g, '$1\n') + footer;
+}
+
 export async function initializeSheet() {
   try {
+    const privateKey = processPrivateKey(process.env.GOOGLE_PRIVATE_KEY);
+    console.log('Private key format:', privateKey.slice(0, 50) + '...');
+
     const credentials = {
       email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
-      key: process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+      key: privateKey,
       scopes: ['https://www.googleapis.com/auth/spreadsheets'],
     };
 
