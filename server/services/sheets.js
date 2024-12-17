@@ -9,9 +9,9 @@ if (process.env.NODE_ENV !== 'production') {
 
 // Validate environment variables
 const requiredEnvVars = [
-  'GOOGLE_SHEETS_SPREADSHEET_ID',
-  'GOOGLE_SHEETS_CLIENT_EMAIL',
-  'GOOGLE_SHEETS_PRIVATE_KEY'
+  'GOOGLE_SHEET_ID',
+  'GOOGLE_SERVICE_ACCOUNT_EMAIL',
+  'GOOGLE_PRIVATE_KEY'
 ];
 
 const missingEnvVars = requiredEnvVars.filter(varName => !process.env[varName]);
@@ -24,13 +24,13 @@ let doc = null;
 export async function initializeSheet() {
   try {
     const credentials = {
-      email: process.env.GOOGLE_SHEETS_CLIENT_EMAIL,
-      key: process.env.GOOGLE_SHEETS_PRIVATE_KEY.replace(/\\n/g, '\n'),
+      email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
+      key: process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, '\n'),
       scopes: ['https://www.googleapis.com/auth/spreadsheets'],
     };
 
     const jwt = new JWT(credentials);
-    doc = new GoogleSpreadsheet(process.env.GOOGLE_SHEETS_SPREADSHEET_ID, jwt);
+    doc = new GoogleSpreadsheet(process.env.GOOGLE_SHEET_ID, jwt);
     await doc.loadInfo();
     console.log('Google Sheets connection initialized successfully');
   } catch (error) {
