@@ -7,12 +7,14 @@ WORKDIR /app
 # Copy package files first
 COPY package*.json ./
 
-# Install dependencies for root and server
+# Install dependencies for root
 RUN npm install
-RUN cd server && npm install
 
 # Copy the rest of the application
 COPY . .
+
+# Install server dependencies
+RUN cd server && npm install
 
 # Build frontend
 RUN npm run build
