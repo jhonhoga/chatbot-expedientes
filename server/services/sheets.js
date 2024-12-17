@@ -60,26 +60,46 @@ async function getSheetData() {
   }
 
   const sheet = doc.sheetsByIndex[0];
+  console.log('Sheet title:', sheet.title);
+  console.log('Total rows:', sheet.rowCount);
+  
   await sheet.loadCells();
   const rows = await sheet.getRows();
+  console.log('Rows loaded:', rows.length);
+  
+  // Log first row as sample
+  if (rows.length > 0) {
+    console.log('Sample row data:', {
+      radicado: rows[0].get('Radicado'),
+      fecha: rows[0].get('Fecha'),
+      asunto: rows[0].get('Asunto'),
+      estado: rows[0].get('Estado')
+    });
+  }
+  
   return rows;
 }
 
 export async function searchByRadicado(radicado) {
   try {
+    console.log('Searching by radicado:', radicado);
     const rows = await getSheetData();
+    
     const result = rows.find(row => {
       const rowRadicado = row.get('Radicado');
+      console.log('Comparing radicado:', rowRadicado, 'with:', radicado);
       return rowRadicado && rowRadicado.toString().toLowerCase() === radicado.toLowerCase();
     });
 
     if (!result) {
+      console.log('No results found for radicado:', radicado);
       return {
         found: false,
         message: 'No se encontró ningún registro con ese número de radicado.'
       };
     }
 
+    console.log('Found result for radicado:', result.get('Radicado'));
     return {
       found: true,
       data: {
@@ -101,12 +121,17 @@ export async function searchByRadicado(radicado) {
 
 export async function searchByAsunto(keyword) {
   try {
+    console.log('Searching by asunto:', keyword);
     const rows = await getSheetData();
+    
     const results = rows.filter(row => {
       const asunto = row.get('Asunto');
+      console.log('Checking asunto:', asunto);
       return asunto && asunto.toLowerCase().includes(keyword.toLowerCase());
     });
 
+    console.log('Found results for asunto:', results.length);
+    
     if (results.length === 0) {
       return {
         found: false,
