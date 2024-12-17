@@ -1,31 +1,30 @@
-import { useState, useEffect, useCallback } from 'react';
-import { API_CONFIG } from '../config/constants';
+import { useState, useEffect } from 'react';
+import { API_CONFIG } from '../config';
 
-export const useServerStatus = () => {
-  const [isServerAvailable, setIsServerAvailable] = useState(false);
-
-  const checkServer = useCallback(async () => {
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 3000);
-
-      const response = await fetch(`${API_CONFIG.BASE_URL}/health`, {
-        method: 'GET',
-        signal: controller.signal,
-      });
-
-      clearTimeout(timeoutId);
-      setIsServerAvailable(response.ok);
-    } catch {
-      setIsServerAvailable(false);
-    }
-  }, []);
+export function useServerStatus() {
+  const [isServerOnline, setIsServerOnline] = useState(false);
 
   useEffect(() => {
-    checkServer();
-    const interval = setInterval(checkServer, 5000);
-    return () => clearInterval(interval);
-  }, [checkServer]);
+    const checkServerStatus = async () => {
+      try {
+        const response = await fetch(`${API_CONFIG.baseURL}/health`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+        setIsServerOnline(response.ok);
+      } catch (error) {
+        console.error('Server health check failed:', error);
+        setIsServerOnline(false);
+      }
+    };
 
-  return isServerAvailable;
-};
+    checkServerStatus();
+    const interval = setInterval(checkServerStatus, 30000); // Check every 30 seconds
+
+    return () => clearInterval(interval);
+  }, []);
+
+  return isServerOnline;
+}

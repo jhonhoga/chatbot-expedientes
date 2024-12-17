@@ -1,68 +1,63 @@
-import { API_CONFIG } from '../config/constants';
-import { APIError, handleAPIError } from '../utils/errorHandling';
+import { API_CONFIG } from '../config';
 
-const fetchWithTimeout = async (
+export class APIError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'APIError';
+  }
+}
+
+async function fetchWithTimeout(
   url: string,
   options: RequestInit & { timeout?: number } = {}
-): Promise<Response> => {
-  const { timeout = API_CONFIG.TIMEOUT } = options;
+): Promise<Response> {
+  const { timeout = 8000, ...fetchOptions } = options;
 
   const controller = new AbortController();
   const id = setTimeout(() => controller.abort(), timeout);
 
   try {
-    console.log(`Fetching URL: ${url}`);
-    console.log('Fetch options:', {
-      method: options.method || 'GET',
-      headers: options.headers,
-      body: options.body ? 'Present' : 'None'
-    });
-
     const response = await fetch(url, {
-      ...options,
-      mode: 'cors',
+      ...fetchOptions,
       signal: controller.signal,
     });
-
     clearTimeout(id);
     return response;
   } catch (error) {
     clearTimeout(id);
-    console.error('Fetch error details:', {
-      name: (error as Error).name,
-      message: (error as Error).message,
-      stack: (error as Error).stack
-    });
     throw error;
   }
-};
+}
 
-export const sendQuery = async (query: string): Promise<{ response: string }> => {
+export async function sendQuery(query: string): Promise<any> {
   try {
-    const response = await fetchWithTimeout(`${API_CONFIG.BASE_URL}/query`, {
+    console.log('Fetching URL:', `${API_CONFIG.baseURL}${API_CONFIG.endpoints.query}`);
+    console.log('Fetch options:', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query })
+    });
+
+    const response = await fetchWithTimeout(`${API_CONFIG.baseURL}${API_CONFIG.endpoints.query}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Accept': 'application/json'
       },
       body: JSON.stringify({ query }),
     });
 
-    console.log('Query response status:', response.status);
-
     if (!response.ok) {
-      const error = await response.json();
-      console.error('Query error:', error);
-      throw new APIError(
-        error.error || 'Error al enviar la consulta',
-        response.status,
-        error.details
-      );
+      console.log('Fetch error details:', response);
+      throw new APIError('Error en la respuesta del servidor');
     }
 
-    return response.json();
+    return await response.json();
   } catch (error) {
-    console.error('Send query error:', error);
-    throw handleAPIError(error);
+    console.log('Send query error:', error);
+    if (error instanceof APIError) {
+      throw error;
+    }
+    console.log('Error handling:', error);
+    throw new APIError('No se pudo conectar al servidor. Por favor, verifica que el servidor esté ejecutándose.');
   }
-};
+}
