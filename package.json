@@ -9,7 +9,7 @@
     "preview": "vite preview",
     "start": "node server/index.js",
     "server": "node server/index.js",
-    "render-build": "npm install && npm run build"
+    "render-build": "npm install && cd server && npm install && cd .. && npm run build"
   },
   "dependencies": {
     "cors": "^2.8.5",
