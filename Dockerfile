@@ -4,12 +4,15 @@ FROM node:18-alpine
 # Set working directory
 WORKDIR /app
 
-# Copy all files
-COPY . .
+# Copy package files first
+COPY package*.json ./
 
 # Install dependencies for root and server
 RUN npm install
 RUN cd server && npm install
+
+# Copy the rest of the application
+COPY . .
 
 # Build frontend
 RUN npm run build
