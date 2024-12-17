@@ -67,23 +67,30 @@ async function getSheetData() {
   const rows = await sheet.getRows();
   console.log('Rows loaded:', rows.length);
   
-  // Log headers and first row data
+  // Log raw data for debugging
   if (rows.length > 0) {
-    // Get all properties of the first row
-    const firstRow = rows[0];
-    const headers = Object.keys(firstRow).filter(key => 
-      !key.startsWith('_') && 
-      typeof firstRow[key] !== 'function'
-    );
+    console.log('First row raw data:', rows[0]._rawData);
+    console.log('First row properties:', Object.getOwnPropertyNames(rows[0]));
     
-    console.log('Available headers:', headers);
+    // Try to access the first cell value directly
+    const a1Cell = sheet.getCell(0, 0);
+    console.log('First cell value:', a1Cell.value);
     
-    // Log the values for each header
-    const sampleData = {};
-    headers.forEach(header => {
-      sampleData[header] = firstRow[header];
-    });
-    console.log('Sample row data:', sampleData);
+    // Get header row
+    const headerRow = [];
+    for (let i = 0; i < sheet.columnCount; i++) {
+      const cell = sheet.getCell(0, i);
+      headerRow.push(cell.value);
+    }
+    console.log('Header row:', headerRow);
+    
+    // Get first data row
+    const firstDataRow = [];
+    for (let i = 0; i < sheet.columnCount; i++) {
+      const cell = sheet.getCell(1, i);
+      firstDataRow.push(cell.value);
+    }
+    console.log('First data row:', firstDataRow);
   }
   
   return rows;
@@ -95,7 +102,8 @@ export async function searchByRadicado(radicado) {
     const rows = await getSheetData();
     
     const result = rows.find(row => {
-      const rowRadicado = row.Radicado || row.RADICADO;
+      const rowData = row._rawData;
+      const rowRadicado = rowData[0]; // Assuming radicado is in the first column
       console.log('Comparing radicado:', rowRadicado, 'with:', radicado);
       return rowRadicado && rowRadicado.toString().toLowerCase() === radicado.toLowerCase();
     });
@@ -108,18 +116,20 @@ export async function searchByRadicado(radicado) {
       };
     }
 
-    console.log('Found result for radicado:', result.Radicado || result.RADICADO);
+    const rowData = result._rawData;
+    console.log('Found result row data:', rowData);
+    
     return {
       found: true,
       data: {
-        radicado: result.Radicado || result.RADICADO || 'No disponible',
-        fecha: result.Fecha || result.FECHA || 'No disponible',
-        asunto: result.Asunto || result.ASUNTO || result.Descripcion || result.DESCRIPCION || 'No disponible',
-        asignado: result.Asignado || result.ASIGNADO || 'No asignado',
-        estado: result.Estado || result.ESTADO || 'Sin estado',
-        fechaEstimada: result.FechaEstimada || result.FECHA_ESTIMADA || 'No definida',
-        respuesta: result.Respuesta || result.RESPUESTA || 'Sin respuesta',
-        enlace: formatUrl(result.URL || result.Url || result.url)
+        radicado: rowData[0] || 'No disponible',
+        fecha: rowData[1] || 'No disponible',
+        asunto: rowData[2] || 'No disponible',
+        asignado: rowData[3] || 'No asignado',
+        estado: rowData[4] || 'Sin estado',
+        fechaEstimada: rowData[5] || 'No definida',
+        respuesta: rowData[6] || 'Sin respuesta',
+        enlace: formatUrl(rowData[7])
       }
     };
   } catch (error) {
@@ -134,7 +144,8 @@ export async function searchByAsunto(keyword) {
     const rows = await getSheetData();
     
     const results = rows.filter(row => {
-      const asunto = row.Asunto || row.ASUNTO || row.Descripcion || row.DESCRIPCION;
+      const rowData = row._rawData;
+      const asunto = rowData[2]; // Assuming asunto is in the third column
       console.log('Checking asunto:', asunto);
       return asunto && asunto.toLowerCase().includes(keyword.toLowerCase());
     });
@@ -150,16 +161,19 @@ export async function searchByAsunto(keyword) {
 
     return {
       found: true,
-      data: results.map(row => ({
-        radicado: row.Radicado || row.RADICADO || 'No disponible',
-        fecha: row.Fecha || row.FECHA || 'No disponible',
-        asunto: row.Asunto || row.ASUNTO || row.Descripcion || row.DESCRIPCION || 'No disponible',
-        asignado: row.Asignado || row.ASIGNADO || 'No asignado',
-        estado: row.Estado || row.ESTADO || 'Sin estado',
-        fechaEstimada: row.FechaEstimada || row.FECHA_ESTIMADA || 'No definida',
-        respuesta: row.Respuesta || row.RESPUESTA || 'Sin respuesta',
-        enlace: formatUrl(row.URL || row.Url || row.url)
-      }))
+      data: results.map(row => {
+        const rowData = row._rawData;
+        return {
+          radicado: rowData[0] || 'No disponible',
+          fecha: rowData[1] || 'No disponible',
+          asunto: rowData[2] || 'No disponible',
+          asignado: rowData[3] || 'No asignado',
+          estado: rowData[4] || 'Sin estado',
+          fechaEstimada: rowData[5] || 'No definida',
+          respuesta: rowData[6] || 'Sin respuesta',
+          enlace: formatUrl(rowData[7])
+        };
+      })
     };
   } catch (error) {
     console.error('Error searching by asunto:', error);
