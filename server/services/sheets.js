@@ -67,16 +67,23 @@ async function getSheetData() {
   const rows = await sheet.getRows();
   console.log('Rows loaded:', rows.length);
   
-  // Log column headers
+  // Log headers and first row data
   if (rows.length > 0) {
-    console.log('Available column headers:', rows[0]._sheet.headerValues);
-    console.log('Sample row raw data:', rows[0]._rawData);
-    console.log('Sample row data:', {
-      radicado: rows[0].get('Radicado'),
-      fecha: rows[0].get('Fecha'),
-      asunto: rows[0].get('Asunto'),
-      estado: rows[0].get('Estado')
+    // Get all properties of the first row
+    const firstRow = rows[0];
+    const headers = Object.keys(firstRow).filter(key => 
+      !key.startsWith('_') && 
+      typeof firstRow[key] !== 'function'
+    );
+    
+    console.log('Available headers:', headers);
+    
+    // Log the values for each header
+    const sampleData = {};
+    headers.forEach(header => {
+      sampleData[header] = firstRow[header];
     });
+    console.log('Sample row data:', sampleData);
   }
   
   return rows;
@@ -88,7 +95,7 @@ export async function searchByRadicado(radicado) {
     const rows = await getSheetData();
     
     const result = rows.find(row => {
-      const rowRadicado = row.get('Radicado');
+      const rowRadicado = row.Radicado || row.RADICADO;
       console.log('Comparing radicado:', rowRadicado, 'with:', radicado);
       return rowRadicado && rowRadicado.toString().toLowerCase() === radicado.toLowerCase();
     });
@@ -101,18 +108,18 @@ export async function searchByRadicado(radicado) {
       };
     }
 
-    console.log('Found result for radicado:', result.get('Radicado'));
+    console.log('Found result for radicado:', result.Radicado || result.RADICADO);
     return {
       found: true,
       data: {
-        radicado: result.get('Radicado') || 'No disponible',
-        fecha: result.get('Fecha') || 'No disponible',
-        asunto: result.get('Asunto') || 'No disponible',
-        asignado: result.get('Asignado') || 'No asignado',
-        estado: result.get('Estado') || 'Sin estado',
-        fechaEstimada: result.get('FechaEstimada') || 'No definida',
-        respuesta: result.get('Respuesta') || 'Sin respuesta',
-        enlace: formatUrl(result.get('URL'))
+        radicado: result.Radicado || result.RADICADO || 'No disponible',
+        fecha: result.Fecha || result.FECHA || 'No disponible',
+        asunto: result.Asunto || result.ASUNTO || result.Descripcion || result.DESCRIPCION || 'No disponible',
+        asignado: result.Asignado || result.ASIGNADO || 'No asignado',
+        estado: result.Estado || result.ESTADO || 'Sin estado',
+        fechaEstimada: result.FechaEstimada || result.FECHA_ESTIMADA || 'No definida',
+        respuesta: result.Respuesta || result.RESPUESTA || 'Sin respuesta',
+        enlace: formatUrl(result.URL || result.Url || result.url)
       }
     };
   } catch (error) {
@@ -127,11 +134,9 @@ export async function searchByAsunto(keyword) {
     const rows = await getSheetData();
     
     const results = rows.filter(row => {
-      const asunto = row.get('Asunto');
-      const descripcion = row.get('DESCRIPCION');  // Intentar con otro posible nombre de columna
-      const textoAsunto = asunto || descripcion;
-      console.log('Checking asunto/descripcion:', textoAsunto);
-      return textoAsunto && textoAsunto.toLowerCase().includes(keyword.toLowerCase());
+      const asunto = row.Asunto || row.ASUNTO || row.Descripcion || row.DESCRIPCION;
+      console.log('Checking asunto:', asunto);
+      return asunto && asunto.toLowerCase().includes(keyword.toLowerCase());
     });
 
     console.log('Found results for asunto:', results.length);
@@ -146,14 +151,14 @@ export async function searchByAsunto(keyword) {
     return {
       found: true,
       data: results.map(row => ({
-        radicado: row.get('Radicado') || 'No disponible',
-        fecha: row.get('Fecha') || 'No disponible',
-        asunto: row.get('Asunto') || row.get('DESCRIPCION') || 'No disponible',
-        asignado: row.get('Asignado') || 'No asignado',
-        estado: row.get('Estado') || 'Sin estado',
-        fechaEstimada: row.get('FechaEstimada') || 'No definida',
-        respuesta: row.get('Respuesta') || 'Sin respuesta',
-        enlace: formatUrl(row.get('URL'))
+        radicado: row.Radicado || row.RADICADO || 'No disponible',
+        fecha: row.Fecha || row.FECHA || 'No disponible',
+        asunto: row.Asunto || row.ASUNTO || row.Descripcion || row.DESCRIPCION || 'No disponible',
+        asignado: row.Asignado || row.ASIGNADO || 'No asignado',
+        estado: row.Estado || row.ESTADO || 'Sin estado',
+        fechaEstimada: row.FechaEstimada || row.FECHA_ESTIMADA || 'No definida',
+        respuesta: row.Respuesta || row.RESPUESTA || 'Sin respuesta',
+        enlace: formatUrl(row.URL || row.Url || row.url)
       }))
     };
   } catch (error) {
