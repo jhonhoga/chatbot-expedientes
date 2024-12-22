@@ -5,6 +5,8 @@ import { ChatMessage } from './components/ChatMessage';
 import { ServerStatus } from './components/ServerStatus';
 import { sendQuery } from './services/api';
 import { APIError } from './utils/errorHandling';
+import { Calendar } from './components/Calendar';
+import { EventList } from './components/EventList';
 
 enum QueryStage {
   Initial,
@@ -20,6 +22,8 @@ function App() {
   const [queryStage, setQueryStage] = useState<QueryStage>(QueryStage.Initial);
   const [queryResult, setQueryResult] = useState<string>('');
   const [selectedQueryType, setSelectedQueryType] = useState<'radicado' | 'asunto' | null>(null);
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
+  const [events, setEvents] = useState<any[]>([]);
   
   // Ref for auto-scrolling
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -129,34 +133,64 @@ function App() {
     }
   }, [queryStage, handleQueryTypeSelection, handleQuerySubmit, addMessage, resetChat]);
 
+  useEffect(() => {
+    const loadEvents = async () => {
+      try {
+        const response = await fetch('/api/events');
+        const data = await response.json();
+        setEvents(data);
+      } catch (error) {
+        console.error('Error loading events:', error);
+      }
+    };
+    loadEvents();
+  }, []);
+
   return (
-    <div className="flex flex-col h-screen bg-gray-100 max-w-full overflow-hidden">
+    <div className="flex h-screen bg-gray-100 max-w-full overflow-hidden">
       {/* Header */}
-      <div className="bg-blue-600 text-white py-4 px-6 shadow-md">
+      <div className="fixed top-0 left-0 right-0 bg-blue-600 text-white py-4 px-6 shadow-md z-10">
         <div className="flex items-center justify-start space-x-2">
           <FileSearch className="w-8 h-8" />
           <h1 className="text-xl font-semibold">Centro de Consulta de Expedientes - Secretaria de Servicios Públicos</h1>
         </div>
       </div>
       
-      <div className="flex-1 overflow-y-auto space-y-4 p-2 sm:p-4 max-w-full">
-        <div className="max-w-full mx-auto">
-          {messages.map((message, index) => (
-            <ChatMessage key={index} message={message} />
-          ))}
-          {isLoading && (
-            <div className="text-center text-gray-500 italic p-4">
-              Cargando...
+      {/* Main Content */}
+      <div className="flex w-full mt-16 overflow-hidden">
+        {/* Chat Section */}
+        <div className="w-1/2 flex flex-col h-[calc(100vh-4rem)] border-r border-gray-200">
+          <div className="flex-1 overflow-y-auto space-y-4 p-4">
+            <div className="max-w-full">
+              {messages.map((message, index) => (
+                <ChatMessage key={index} message={message} />
+              ))}
+              {isLoading && (
+                <div className="text-center text-gray-500 italic p-4">
+                  Cargando...
+                </div>
+              )}
+              <div ref={messagesEndRef} />
             </div>
-          )}
-          {/* Invisible div to enable scrolling to bottom */}
-          <div ref={messagesEndRef} />
+          </div>
+          
+          <ServerStatus 
+            onSendMessage={handleSendMessage}
+          />
+        </div>
+
+        {/* Calendar and Events Section */}
+        <div className="w-1/2 h-[calc(100vh-4rem)] p-4 overflow-y-auto">
+          <Calendar 
+            events={events} 
+            onDateSelect={setSelectedDate}
+          />
+          <EventList 
+            events={events}
+            selectedDate={selectedDate}
+          />
         </div>
       </div>
-      
-      <ServerStatus 
-        onSendMessage={handleSendMessage}
-      />
     </div>
   );
 }

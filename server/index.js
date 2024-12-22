@@ -26,6 +26,13 @@ import('./routes/api.js').then(module => {
   console.error('Error loading routes:', err);
 });
 
+const queryRouter = require('./routes/query');
+const eventsRouter = require('./routes/events');
+
+// Rutas
+app.use('/api/query', queryRouter);
+app.use('/api/events', eventsRouter);
+
 // Handle React routing, return all requests to React app
 app.get('*', (req, res) => {
   res.sendFile(join(__dirname, '../dist/index.html'));
